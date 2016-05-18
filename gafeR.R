@@ -1,9 +1,11 @@
 
-
+# gafeR.R
+# Functions to get or post to Google APIs commonly used for
+#     Google Apps for Education districts
 
 library(googleAuthR)
 library(dplyr)
-library(jsonlite)
+# library(jsonlite)
 
 options("googleAuthR.client_id" = client_id)
 options("googleAuthR.client_secret" = client_secret)
@@ -109,6 +111,9 @@ add_user <-
 
 ##### OrgUnits #####
 
+# Get all org units (doesn't appear to be a page max)
+# Reference: https://developers.google.com/admin-sdk/directory/v1/reference/orgunits/list#request
+
 get_org_units <- function(customer_ID, org_path) {
   f <-
     gar_api_generator(
@@ -125,7 +130,7 @@ get_org_units <- function(customer_ID, org_path) {
   return(as.data.frame(g_org_units$content$organizationUnits))
 }
 
-
+# Create a new org unit with the org structure
 add_org_unit <- function(customer_ID, org_name, parent_path) {
   #https://www.googleapis.com/admin/directory/v1/customer/{customerId}/orgunits
   
@@ -167,21 +172,23 @@ get_groups <- function(domain) {
 }
 
 
-# get all members of a given group
-# need to add looping to accomodate groups with more than 500 members
+# Get all members of a given group
+# Reference: https://developers.google.com/admin-sdk/directory/v1/reference/members/list#request
+# API https://www.googleapis.com/admin/directory/v1/groups/groupKey/members
+# TODO: need to add looping to accomodate groups with more than 200 members
 get_members <- function(group_key) {
-  
   f <-
     gar_api_generator(
       "https://www.googleapis.com/admin/directory/v1",
       "GET",
-      pars_args = list(maxResults = "500"),
-      path_args = list(groupKey = "default_group_key")
+      pars_args = list(maxResults = "200"),
+      path_args = list(groups = "default_group_key",
+                       members = "")
     )
   
   g_group_members <-
     f(the_body = body,
-      path_arguments = list(groupKey = group_key))
+      path_arguments = list(groups = group_key))
   
   return(as.data.frame(g_group_members$content$members))
 }
@@ -207,6 +214,9 @@ add_member <- function(email_address, group_email){
 ##### Classroom #####
 # may need to add loop to handle multiple pages of returned classes
 # https://developers.google.com/classroom/reference/rest/
+# TODO: set columns with date/time to posix data types
+# TODO: set coursestate to factor
+# TODO: join with user data to get name of owner in one df
 
 get_classes <- function() {
   f <-
