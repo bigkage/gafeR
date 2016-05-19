@@ -5,7 +5,7 @@
 
 library(googleAuthR)
 library(dplyr)
-# library(jsonlite)
+library(jsonlite)
 
 options("googleAuthR.client_id" = client_id)
 options("googleAuthR.client_secret" = client_secret)
@@ -45,7 +45,7 @@ get_users <- function(domain) {
       
       df_users <-
         flatten(as.data.frame(g_users$content$users), recursive = TRUE)
-      
+
     } else {
       # 2nd+ times api called to include pageToken
       f <-
@@ -62,7 +62,7 @@ get_users <- function(domain) {
       
       users_temp <-
         flatten(as.data.frame(g_users$content$users), recursive = TRUE)
-      
+
       # add new records to final dataframe
       df_users <- bind_rows(df_users, users_temp)
       
@@ -74,6 +74,10 @@ get_users <- function(domain) {
     
     # if there is no more next page tokens, that means were done looping
     if (is.null(page_token)) {
+      
+      df_users$creationTime <- as.POSIXct(df_users$creationTime, "%Y-%m-%dT%H:%M:%S", tz="UTC")
+      df_users$lastLoginTime <- as.POSIXct(df_users$lastLoginTime, "%Y-%m-%dT%H:%M:%S", tz="UTC")
+      
       return(df_users)
     }
   }
@@ -215,7 +219,6 @@ add_member <- function(email_address, group_email){
 # may need to add loop to handle multiple pages of returned classes
 # https://developers.google.com/classroom/reference/rest/
 # TODO: set columns with date/time to posix data types
-# TODO: set coursestate to factor
 # TODO: join with user data to get name of owner in one df
 
 get_classes <- function() {
@@ -224,7 +227,13 @@ get_classes <- function() {
   
   g_classes <- f(the_body = body)
   
-  return(as.data.frame(g_classes$content$courses))
+  df_classes <- as.data.frame(g_classes$content$courses)
+  
+  # convert some data types
+  df_classes$courseState <- as.factor(df_classes$courseState)
+  df_classes$creationTime <- as.POSIXct(df_classes$creationTime, "%Y-%m-%dT%H:%M:%S", tz="UTC")
+  df_classes$updateTime <- as.POSIXct(df_classes$updateTime, "%Y-%m-%dT%H:%M:%S", tz="UTC")
+  return(df_classes)
 }
 
 
