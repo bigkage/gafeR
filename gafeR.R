@@ -6,6 +6,7 @@
 library(googleAuthR)
 library(dplyr)
 library(jsonlite)
+source("configs.R")
 
 options("googleAuthR.client_id" = client_id)
 options("googleAuthR.client_secret" = client_secret)
@@ -118,7 +119,7 @@ add_user <-
 # Get all org units (doesn't appear to be a page max)
 # Reference: https://developers.google.com/admin-sdk/directory/v1/reference/orgunits/list#request
 
-get_org_units <- function(customer_ID, org_path) {
+get_org_units <- function(customer_ID) {
   f <-
     gar_api_generator(
       "https://www.googleapis.com/admin/directory/v1",
@@ -179,7 +180,6 @@ get_groups <- function(domain) {
 # Get all members of a given group
 # Reference: https://developers.google.com/admin-sdk/directory/v1/reference/members/list#request
 # API https://www.googleapis.com/admin/directory/v1/groups/groupKey/members
-# TODO: need to add looping to accomodate groups with more than 200 members
 get_members <- function(group_key) {
   
   page_token <- NULL # used to track next page
@@ -254,10 +254,10 @@ add_member <- function(email_address, group_email){
   
 }
 
+
 ##### Classroom #####
-# may need to add loop to handle multiple pages of returned classes
+# TODO: add loop to handle multiple pages of returned classes
 # https://developers.google.com/classroom/reference/rest/
-# TODO: set columns with date/time to posix data types
 # TODO: join with user data to get name of owner in one df
 
 get_classes <- function() {
