@@ -1,5 +1,5 @@
 
-
+# NOT FINISHED
 # Add Students from Skyward to GAFE
 
 # Export all students from Skyward who are active and don't have disable acct flag in Skyward set to TRUE
