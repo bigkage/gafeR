@@ -181,22 +181,61 @@ get_groups <- function(domain) {
 # API https://www.googleapis.com/admin/directory/v1/groups/groupKey/members
 # TODO: need to add looping to accomodate groups with more than 200 members
 get_members <- function(group_key) {
-  f <-
-    gar_api_generator(
-      "https://www.googleapis.com/admin/directory/v1",
-      "GET",
-      pars_args = list(maxResults = "200"),
-      path_args = list(groups = "default_group_key",
-                       members = "")
-    )
   
-  g_group_members <-
-    f(the_body = body,
-      path_arguments = list(groups = group_key))
+  page_token <- NULL # used to track next page
   
-  return(as.data.frame(g_group_members$content$members))
+  repeat {
+    # construct and process first time api called
+    if (is.null(page_token)) {
+      f <-
+        gar_api_generator(
+          "https://www.googleapis.com/admin/directory/v1",
+          "GET",
+          pars_args = list(maxResults = "200"),
+          path_args = list(groups = "default_group_key",
+                           members = "")
+        )
+      
+      g_group_members <-
+        f(the_body = body,
+          path_arguments = list(groups = group_key))
+      
+      df_group_members <-
+        as.data.frame(g_group_members$content$members)
+      
+    } else {
+      # 2nd+ pages
+      f <-
+        gar_api_generator(
+          "https://www.googleapis.com/admin/directory/v1",
+          "GET",
+          pars_args = list(maxResults = "200",
+                           pageToken = page_token),
+          path_args = list(groups = "default_group_key",
+                           members = "")
+        )
+      
+      g_group_members <-
+        f(the_body = body,
+          path_arguments = list(groups = group_key))
+      
+      group_members_temp <-
+        as.data.frame(g_group_members$content$members)
+      
+      df_group_members <-
+        rbind(df_group_members, group_members_temp)
+    }
+    
+    group_members_temp <- NULL
+    
+    page_token = g_group_members$content$nextPageToken
+    
+    # done fetching pages
+    if (is.null(page_token)) {
+      return(df_group_members)
+    }
+  }
 }
-
 
 add_member <- function(email_address, group_email){
   
